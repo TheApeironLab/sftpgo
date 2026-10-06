@@ -2060,3 +2060,20 @@ func getPreLoginScriptContent(user dataprovider.User, nonJSONResponse bool) []by
 	}
 	return content
 }
+
+func TestOIDCPKCEVerifierIsUniqueAndSurvivesPendingState(t *testing.T) {
+	first := newOIDCPendingAuth(tokenAudienceWebClient)
+	second := newOIDCPendingAuth(tokenAudienceWebClient)
+	require.GreaterOrEqual(t, len(first.CodeVerifier), 43)
+	require.NotEqual(t, first.CodeVerifier, second.CodeVerifier)
+	encoded, err := json.Marshal(first)
+	require.NoError(t, err)
+	var restored oidcPendingAuth
+	require.NoError(t, json.Unmarshal(encoded, &restored))
+	require.Equal(t, first.CodeVerifier, restored.CodeVerifier)
+	config := oauth2.Config{Endpoint: oauth2.Endpoint{AuthURL: "https://example.internal/authorize"}}
+	target, err := url.Parse(config.AuthCodeURL(first.State, oauth2.S256ChallengeOption(restored.CodeVerifier)))
+	require.NoError(t, err)
+	require.Equal(t, "S256", target.Query().Get("code_challenge_method"))
+	require.Equal(t, oauth2.S256ChallengeFromVerifier(first.CodeVerifier), target.Query().Get("code_challenge"))
+}
