@@ -1,5 +1,8 @@
 name: Chentu file browser image
 on:
+  push:
+    branches: [codex/oidc-pkce]
+    paths: ['internal/httpd/oidc.go', 'Dockerfile.chentu', '.github/workflows/chentu-image.yml']
   workflow_dispatch:
 permissions:
   contents: read
