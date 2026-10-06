@@ -36,3 +36,12 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/TheApeironLab/sftpgo
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Export offline image
+        run: |
+          docker pull --platform linux/arm64 ghcr.io/theapeironlab/sftpgo:2.7.6-chentu-pkce.1
+          docker save ghcr.io/theapeironlab/sftpgo:2.7.6-chentu-pkce.1 -o /tmp/sftpgo-arm64.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sftpgo-arm64
+          path: /tmp/sftpgo-arm64.tar
+          retention-days: 7
