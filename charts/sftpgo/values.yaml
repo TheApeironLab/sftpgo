@@ -1,0 +1,13 @@
+domain: ""
+registry: ""
+storageClass: longhorn
+image: unset
+storage: 1Gi
+users: []
+operatorBucket: ""
+sharedBucket: files-team
+frameAncestors: "'self'"
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {memory: 512Mi}
+podAnnotations: {}

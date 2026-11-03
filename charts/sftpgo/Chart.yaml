@@ -1,0 +1,8 @@
+apiVersion: v2
+name: sftpgo
+description: sftpgo application for Apeiron; independently installed and upgraded.
+version: 0.1.0
+type: application
+appVersion: "2.7.6"
+sources:
+  - https://github.com/TheApeironLab/sftpgo
