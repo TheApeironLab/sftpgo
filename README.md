@@ -127,3 +127,11 @@ More information about [compliance](https://sftpgo.com/compliance.html).
 ## Copyright
 
 Copyright (C) 2019 - 2026 Nicola Murino
+
+
+## Apeiron Helm application
+
+The application-owned Kubernetes chart is [`charts/sftpgo`](charts/sftpgo/README.md).
+Its `Application chart` workflow produces a standard Helm package and a source/SHA-256
+release record for Vasi import. Site IAM, storage and credentials are supplied through
+the chart's documented values and existing Secret references.

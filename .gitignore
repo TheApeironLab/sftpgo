@@ -1,3 +1,7 @@
 # compilation output
 sftpgo
 sftpgo.exe
+
+# The application chart shares the binary's name and is source, not build output.
+!/charts/sftpgo/
+!/charts/sftpgo/**

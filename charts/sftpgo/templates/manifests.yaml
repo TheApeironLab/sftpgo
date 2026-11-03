@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: files-data}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.storageClass }}
+  resources:
+    requests: {storage: {{ .Values.storage }}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: files}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: files}
+  template:
+    metadata:
+      labels: {app: files}
+      {{- with .Values.podAnnotations }}
+      annotations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext: {fsGroup: 1000}
+      imagePullSecrets: [{name: registry-pull}]
+      containers:
+        - name: files
+          image: {{ required "files image is required" .Values.image | quote }}
+          args: [serve, --config-dir, /etc/sftpgo, --log-level, info]
+          securityContext: {runAsNonRoot: true, runAsUser: 1000, allowPrivilegeEscalation: false}
+          env:
+            - {name: SSL_CERT_DIR, value: "/etc/ssl/certs:/etc/chentu-ca"}
+            - {name: SFTPGO_SFTPD__BINDINGS__0__PORT, value: "0"}
+            - {name: SFTPGO_DATA_PROVIDER__DRIVER, value: bolt}
+            - {name: SFTPGO_DATA_PROVIDER__NAME, value: /var/lib/sftpgo/files.db}
+            - {name: SFTPGO_DATA_PROVIDER__USERS_BASE_DIR, value: /var/lib/sftpgo/homes}
+            - {name: SFTPGO_DATA_PROVIDER__CREATE_DEFAULT_ADMIN, value: "true"}
+            - {name: SFTPGO_DEFAULT_ADMIN_USERNAME, value: automation}
+            - name: SFTPGO_DEFAULT_ADMIN_PASSWORD
+              valueFrom: {secretKeyRef: {name: files-admin, key: password}}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__PORT, value: "8080"}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__ENABLE_WEB_ADMIN, value: "false"}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__ENABLE_REST_API, value: "false"}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__DISABLED_LOGIN_METHODS, value: "9"}
+            - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_ID
+              valueFrom: {secretKeyRef: {name: files-oidc, key: client-id}}
+            - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_SECRET
+              valueFrom: {secretKeyRef: {name: files-oidc, key: client-secret}}
+            - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CONFIG_URL
+              valueFrom: {secretKeyRef: {name: files-oidc, key: issuer}}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__REDIRECT_BASE_URL, value: "https://files.{{ (default .Values.domain .Values.publicDomain) }}"}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__USERNAME_FIELD, value: sub}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__ENABLED, value: "true"}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__CONTENT_SECURITY_POLICY, value: {{ printf "frame-ancestors %s" .Values.frameAncestors | quote }}}
+            - {name: SFTPGO_HTTPD__BINDINGS__1__PORT, value: "8081"}
+            - {name: SFTPGO_HTTPD__BINDINGS__1__ADDRESS, value: "127.0.0.1"}
+            - {name: SFTPGO_HTTPD__BINDINGS__1__ENABLE_WEB_ADMIN, value: "false"}
+            - {name: SFTPGO_HTTPD__BINDINGS__1__ENABLE_WEB_CLIENT, value: "false"}
+            - {name: SFTPGO_HTTPD__BINDINGS__1__ENABLE_REST_API, value: "true"}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /healthz, port: http}}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, initialDelaySeconds: 30}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/sftpgo}
+            - {name: temporary, mountPath: /tmp}
+            - {name: chentu-ca, mountPath: /etc/chentu-ca, readOnly: true}
+      volumes:
+        - {name: temporary, emptyDir: {sizeLimit: 1Gi}}
+        - {name: data, persistentVolumeClaim: {claimName: files-data}}
+        - {name: chentu-ca, configMap: {name: chentu-ca}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: files}
+spec:
+  selector: {app: files}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: files
+  annotations: {cert-manager.io/cluster-issuer: chentu-internal-ca}
+spec:
+  ingressClassName: traefik
+  tls: [{hosts: [files.{{ .Values.domain }}], secretName: files-tls}]
+  rules:
+    - host: files.{{ .Values.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: files, port: {number: 8080}}}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: files}
+spec:
+  podSelector: {matchLabels: {app: files}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+      ports: [{protocol: TCP, port: 8080}]
