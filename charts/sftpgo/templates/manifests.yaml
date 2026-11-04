@@ -1,3 +1,6 @@
+{{- if not (has .Values.auth.mode (list "external" "oidc")) -}}
+{{- fail "auth.mode must be external or oidc" -}}
+{{- end -}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata: {name: files-data}
@@ -23,8 +26,31 @@ spec:
       {{- end }}
     spec:
       securityContext: {fsGroup: 1000}
-      imagePullSecrets: [{name: registry-pull}]
+      automountServiceAccountToken: false
+      imagePullSecrets: {{ toJson .Values.imagePullSecrets }}
       containers:
+{{- if eq .Values.auth.mode "oidc" }}
+        - name: identity-projection
+          image: {{ required "provisioner.image is required for managed OIDC" .Values.provisioner.image | quote }}
+          securityContext: {runAsNonRoot: true, runAsUser: 1000, allowPrivilegeEscalation: false}
+          env:
+            - {name: SSO_TENANT, value: {{ required "auth.oidc.tenant is required" .Values.auth.oidc.tenant | quote }}}
+            - {name: SSO_CLIENT_ID, value: {{ required "auth.oidc.clientId is required" .Values.auth.oidc.clientId | quote }}}
+            - {name: S3_ENDPOINT, value: {{ required "provisioner.s3Endpoint is required" .Values.provisioner.s3Endpoint | quote }}}
+            - {name: S3_REGION, value: {{ .Values.provisioner.s3Region | quote }}}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/sftpgo}
+            - {name: chentu-ca, mountPath: /etc/chentu-ca, readOnly: true}
+            - {name: directory-credentials, mountPath: /run/sso/directory, readOnly: true}
+            - {name: admin-credentials, mountPath: /run/sso/admin, readOnly: true}
+            - {name: storage-credentials, mountPath: /run/sso/storage, readOnly: true}
+          resources:
+            requests: {cpu: 20m, memory: 48Mi}
+            limits: {memory: 256Mi}
+          readinessProbe:
+            exec: {command: [python3, /opt/files-sso/sync.py, ready]}
+            periodSeconds: 5
+{{- end }}
         - name: files
           image: {{ required "files image is required" .Values.image | quote }}
           args: [serve, --config-dir, /etc/sftpgo, --log-level, info]
@@ -38,18 +64,18 @@ spec:
             - {name: SFTPGO_DATA_PROVIDER__CREATE_DEFAULT_ADMIN, value: "true"}
             - {name: SFTPGO_DEFAULT_ADMIN_USERNAME, value: automation}
             - name: SFTPGO_DEFAULT_ADMIN_PASSWORD
-              valueFrom: {secretKeyRef: {name: files-admin, key: password}}
+              valueFrom: {secretKeyRef: {name: {{ .Values.adminSecret }}, key: password}}
             - {name: SFTPGO_HTTPD__BINDINGS__0__PORT, value: "8080"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__ENABLE_WEB_ADMIN, value: "false"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__ENABLE_REST_API, value: "false"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__DISABLED_LOGIN_METHODS, value: "9"}
             - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_ID
-              valueFrom: {secretKeyRef: {name: files-oidc, key: client-id}}
+              valueFrom: {secretKeyRef: {name: {{ default "files-oidc" .Values.auth.oidc.existingSecret }}, key: client-id}}
             - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_SECRET
-              valueFrom: {secretKeyRef: {name: files-oidc, key: client-secret}}
+              valueFrom: {secretKeyRef: {name: {{ default "files-oidc" .Values.auth.oidc.existingSecret }}, key: client-secret}}
             - name: SFTPGO_HTTPD__BINDINGS__0__OIDC__CONFIG_URL
-              valueFrom: {secretKeyRef: {name: files-oidc, key: issuer}}
-            - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__REDIRECT_BASE_URL, value: "https://files.{{ (default .Values.domain .Values.publicDomain) }}"}
+              valueFrom: {secretKeyRef: {name: {{ default "files-oidc" .Values.auth.oidc.existingSecret }}, key: issuer}}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__REDIRECT_BASE_URL, value: {{ default (printf "https://files.%s" (default .Values.domain .Values.publicDomain)) .Values.publicUrl | quote }}}
             - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__USERNAME_FIELD, value: sub}
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__ENABLED, value: "true"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__CONTENT_SECURITY_POLICY, value: {{ printf "frame-ancestors %s" .Values.frameAncestors | quote }}}
@@ -67,9 +93,17 @@ spec:
             - {name: temporary, mountPath: /tmp}
             - {name: chentu-ca, mountPath: /etc/chentu-ca, readOnly: true}
       volumes:
+{{- if eq .Values.auth.mode "oidc" }}
+        - name: directory-credentials
+          secret: {secretName: {{ required "auth.oidc.directorySecret is required" .Values.auth.oidc.directorySecret }}}
+        - name: admin-credentials
+          secret: {secretName: {{ .Values.adminSecret }}}
+        - name: storage-credentials
+          secret: {secretName: {{ .Values.provisioner.existingSecret }}}
+{{- end }}
         - {name: temporary, emptyDir: {sizeLimit: 1Gi}}
         - {name: data, persistentVolumeClaim: {claimName: files-data}}
-        - {name: chentu-ca, configMap: {name: chentu-ca}}
+        - {name: chentu-ca, configMap: {name: {{ .Values.caConfigMap }}}}
 ---
 apiVersion: v1
 kind: Service
@@ -85,9 +119,9 @@ metadata:
   annotations: {cert-manager.io/cluster-issuer: chentu-internal-ca}
 spec:
   ingressClassName: traefik
-  tls: [{hosts: [files.{{ .Values.domain }}], secretName: files-tls}]
+  tls: [{hosts: [{{ default (printf "files.%s" .Values.domain) .Values.ingress.host }}], secretName: files-tls}]
   rules:
-    - host: files.{{ .Values.domain }}
+    - host: {{ default (printf "files.%s" .Values.domain) .Values.ingress.host }}
       http:
         paths:
           - path: /
