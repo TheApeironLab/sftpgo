@@ -11,3 +11,25 @@ resources:
   requests: {cpu: 100m, memory: 128Mi}
   limits: {memory: 512Mi}
 podAnnotations: {}
+
+# Public origin and OIDC references supplied by the deployment controller.
+publicUrl: ""
+ingress: {host: ""}
+caConfigMap: chentu-ca
+imagePullSecrets: [{name: registry-pull}]
+auth:
+  mode: external
+  oidc:
+    issuer: ""
+    clientId: ""
+    existingSecret: ""
+    directorySecret: ""
+
+adminSecret: files-admin
+provisioner:
+  image: ""
+  # Explicit scoped identities: users.json [{subject,bucket,credential:{accessKey,secretKey}}], shared-bucket.
+  # The storage operator creates these buckets and scopes each key to its private + shared bucket.
+  existingSecret: files-provisioning
+  s3Endpoint: ""
+  s3Region: us-east-1

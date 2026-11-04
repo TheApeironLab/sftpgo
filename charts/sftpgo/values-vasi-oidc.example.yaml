@@ -1,0 +1,21 @@
+# Public references only; credentials never belong in Helm values.
+domain: example.internal
+publicUrl: https://files.example.internal
+ingress: {host: files.example.internal}
+storageClass: local-path
+image: registry.example.internal/apps/sftpgo:reviewed
+imagePullSecrets: [{name: vasi-registry-pull}]
+caConfigMap: vasi-files-oidc-ca
+adminSecret: vasi-files-admin
+auth:
+  mode: oidc
+  oidc:
+    issuer: https://iam.example.internal/realms/master
+    clientId: vasi-files-files
+    tenant: example
+    existingSecret: vasi-files-oidc
+    directorySecret: vasi-files-directory
+provisioner:
+  image: registry.example.internal/apps/files-sso:reviewed
+  existingSecret: files-provisioning
+  s3Endpoint: http://seaweedfs-s3.storage.svc:8333
