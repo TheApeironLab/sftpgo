@@ -82,7 +82,7 @@
         "send_reset_code": "发送重置码",
         "signin": "登录",
         "signin_openid": "使用 OpenID 登录",
-        "signout": "注销",
+        "signout": "退出登录",
         "auth_code": "验证码",
         "two_factor_help": "在您的设备上打开双因素认证应用程序，以查看您的认证代码并验证您的身份。",
         "two_factor_msg": "输入双因素认证恢复密钥",
@@ -104,7 +104,9 @@
     "theme": {
         "light": "明亮",
         "dark": "暗黑",
-        "system": "自动"
+        "system": "自动",
+        "appearance": "外观",
+        "language": "语言"
     },
     "general": {
         "invalid_auth_request": "身份验证请求不符合安全要求",
@@ -385,7 +387,7 @@
         }
     },
     "datatable": {
-        "info": "Showing _START_ to _END_ of _TOTAL_ records",
+        "info": "显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项",
         "info_empty": "无记录显示",
         "info_filtered": "(从 _MAX_ 条总记录中筛选)",
         "processing": "处理中...",
@@ -1140,5 +1142,18 @@
             "user": "用户登录",
             "admin": "管理员登录"
         }
+    },
+    "apeiron": {
+        "heading": "Apeiron 文件",
+        "subheading": "个人与团队文件，统一存储与共享",
+        "feature_personal": "个人存储空间",
+        "feature_team": "团队共享文件夹",
+        "feature_share": "外部分享链接",
+        "signin_title": "欢迎登录",
+        "signin_description": "使用平台账号登录，访问个人与团队文件。",
+        "signin_sso": "使用 SSO 登录",
+        "need_account": "需要开通账号？请联系站点管理员。",
+        "toggle_sidebar": "切换侧栏",
+        "account_settings": "账户与设置"
     }
 }

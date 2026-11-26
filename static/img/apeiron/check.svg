@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon_dh</title>
+    <defs>
+        <linearGradient x1="50%" y1="-3.29833984%" x2="44.9633789%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#D7ECFD" offset="0%"></stop>
+            <stop stop-color="#0066BA" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="2.13342416%" y1="2.77300237%" x2="100%" y2="97.9199119%" id="linearGradient-2">
+            <stop stop-color="#404754" offset="0%"></stop>
+            <stop stop-color="#0A0A0A" offset="19.1405071%"></stop>
+            <stop stop-color="#0A0A0A" stop-opacity="0.5" offset="61.1634475%"></stop>
+            <stop stop-color="#0066BA" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="-0.903407063%" y1="50%" x2="100%" y2="46.0936737%" id="linearGradient-3">
+            <stop stop-color="#FFFFFF" stop-opacity="0.4" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.1" offset="100%"></stop>
+        </linearGradient>
+        <path d="M12,0 C18.627417,-1.77635684e-15 24,5.372583 24,12 C24,18.627417 18.627417,24 12,24 C5.372583,24 0,18.627417 0,12 C0,5.372583 5.372583,0 12,0 Z" id="path-4"></path>
+        <filter x="-50.7%" y="-52.1%" width="201.4%" height="245.8%" filterUnits="objectBoundingBox" id="filter-5">
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="2" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.0745098039   0 0 0 0 0.0784313725   0 0 0 0 0.0980392157  0 0 0 1 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <linearGradient x1="41.4419724%" y1="0%" x2="41.4419724%" y2="116.906411%" id="linearGradient-6">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#0066BA" offset="100%"></stop>
+        </linearGradient>
+        <path d="M5.30871611,9.6 C5.03338562,9.6 4.7666592,9.49675106 4.56016133,9.29025319 L0.309746807,5.02263052 C-0.103248936,4.60963477 -0.103248936,3.92991261 0.309746807,3.51691687 C0.72274255,3.10392113 1.39386063,3.10392113 1.81546045,3.51691687 L5.30871611,7.02738069 L11.9940847,0.316199866 C12.4070804,-0.105399955 13.0781985,-0.105399955 13.4911943,0.316199866 C13.90419,0.729195608 13.90419,1.40891777 13.4911943,1.82191351 L6.05727089,9.28164911 C5.85077302,9.49675106 5.57544253,9.6 5.30871611,9.6 Z" id="path-7"></path>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="登录" transform="translate(-72, -555)">
+            <g id="icon_dh" transform="translate(72, 555)">
+                <g id="矩形">
+                    <use fill-opacity="0.6" fill="url(#linearGradient-1)" xlink:href="#path-4"></use>
+                    <path stroke="url(#linearGradient-3)" stroke-width="1" d="M12,0.5 C15.1756373,0.5 18.0506373,1.78718134 20.131728,3.86827202 C22.2128187,5.94936269 23.5,8.82436269 23.5,12 C23.5,15.1756373 22.2128187,18.0506373 20.131728,20.131728 C18.0506373,22.2128187 15.1756373,23.5 12,23.5 C8.82436269,23.5 5.94936269,22.2128187 3.86827202,20.131728 C1.78718134,18.0506373 0.5,15.1756373 0.5,12 C0.5,8.82436269 1.78718134,5.94936269 3.86827202,3.86827202 C5.94936269,1.78718134 8.82436269,0.5 12,0.5 Z" stroke-linejoin="square" fill="url(#linearGradient-2)"></path>
+                </g>
+                <g id="编组" filter="url(#filter-5)" transform="translate(5.4, 7.2)" fill-rule="nonzero">
+                    <g id="路径">
+                        <use fill="#272636" xlink:href="#path-7"></use>
+                        <use fill="url(#linearGradient-6)" xlink:href="#path-7"></use>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

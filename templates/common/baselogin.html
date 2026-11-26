@@ -28,26 +28,47 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
     	<link href="{{$.StaticURL}}{{.}}" rel="stylesheet" type="text/css">
     	{{- end}}
 		{{- template "globalstyle" .CSPNonce }}
+		<link href="{{.StaticURL}}/css/apeiron.css" rel="stylesheet" type="text/css">
         {{- range .Branding.ExtraCSS}}
     	<link href="{{$.StaticURL}}{{.}}" rel="stylesheet" type="text/css">
     	{{- end}}
 		{{- template "commonjs" .CSPNonce}}
 	</head>
 
-    <body class="app-blank">
+    <body class="app-blank apeiron-login-body">
         {{- template "theme-setup" .CSPNonce}}
 		<div id="app_loader" class="align-items-center text-center my-10">
             <span class="spinner-border w-15px h-15px text-muted align-middle me-2"></span>
         </div>
-        <div class="d-flex flex-column flex-root d-none" id="app_root">
-			<div class="d-flex flex-column flex-column-fluid bgi-position-y-bottom position-x-center bgi-no-repeat bgi-size-contain bgi-attachment-fixed">
-				<div class="d-flex flex-center flex-column flex-column-fluid p-10 pb-lg-20">
-					<div class="w-lg-500px w-md-450px w-sm-400px bg-body rounded shadow-sm p-10 p-lg-15 mx-auto">
-                        {{template "content" .}}
-					</div>
-				</div>
-			</div>
-		</div>
+        <div class="apeiron-login d-none" id="app_root" data-bs-theme="dark">
+            <div class="apeiron-login-beams" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="apeiron-login-inner">
+                <div class="apeiron-login-top">
+                    <img alt="Apeiron" src="{{.StaticURL}}/img/apeiron/brand-dark.svg" class="apeiron-login-logo" />
+                    <div class="apeiron-login-extra">
+                        <select id="languageSwitcher" name="language" class="form-select form-select-sm" data-control="i18n-select2" data-hide-search="true"></select>
+                    </div>
+                </div>
+                <div class="apeiron-login-main">
+                    <div class="apeiron-login-intro">
+                        <p class="apeiron-login-heading" data-i18n="apeiron.heading">Apeiron Files</p>
+                        <p class="apeiron-login-subheading" data-i18n="apeiron.subheading">Personal and team files in one place</p>
+                        <ul class="apeiron-login-features">
+                            <li><img alt="" src="{{.StaticURL}}/img/apeiron/check.svg" /><span data-i18n="apeiron.feature_personal">Personal storage</span></li>
+                            <li><img alt="" src="{{.StaticURL}}/img/apeiron/check.svg" /><span data-i18n="apeiron.feature_team">Team folders</span></li>
+                            <li><img alt="" src="{{.StaticURL}}/img/apeiron/check.svg" /><span data-i18n="apeiron.feature_share">Share links</span></li>
+                        </ul>
+                    </div>
+                    <div class="apeiron-login-column">
+                        <section class="apeiron-login-card">
+                            <span class="apeiron-login-glow" aria-hidden="true"><span></span></span>
+                            {{- template "content" .}}
+                        </section>
+                        <div class="apeiron-login-footer" data-i18n="apeiron.need_account">Need an account? Contact your site administrator.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 		<script {{- if .CSPNonce}} nonce="{{.CSPNonce}}"{{- end}} src="{{.StaticURL}}/assets/plugins/global/plugins.bundle.js"></script>
 		<script {{- if .CSPNonce}} nonce="{{.CSPNonce}}"{{- end}} src="{{.StaticURL}}/assets/js/scripts.bundle.js"></script>
 		<script {{- if .CSPNonce}} nonce="{{.CSPNonce}}"{{- end}} src="{{.StaticURL}}/vendor/i18next/i18next.min.js"></script>

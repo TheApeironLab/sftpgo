@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {"imageRegistry": {"type": "string"}}
+    },
+    "images": {
+      "type": "object",
+      "required": ["drive", "provisioner"],
+      "additionalProperties": false,
+      "properties": {
+        "drive": {"$ref": "#/definitions/image"},
+        "provisioner": {"$ref": "#/definitions/image"}
+      }
+    }
+  },
+  "definitions": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "tag": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "pattern": "^(|sha256:[a-f0-9]{64})$"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

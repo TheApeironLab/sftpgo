@@ -1,12 +1,26 @@
 domain: ""
 registry: ""
 storageClass: longhorn
+# A site registry selects the immutable Vasi image roles. Standalone users may
+# keep supplying image and provisioner.image directly.
+global:
+  imageRegistry: ""
+vasi:
+  imageContract: vasi.images.v1
+  complete: true
+images:
+  drive: {repository: apps/drive, tag: "0.3.0", digest: ""}
+  provisioner: {repository: apps/drive-provisioner, tag: "0.3.0", digest: ""}
 image: unset
+clusterIssuer: chentu-internal-ca
 storage: 1Gi
 users: []
 operatorBucket: ""
 sharedBucket: files-team
 frameAncestors: "'self'"
+# WebClient UI languages. The first entry is the default; users can switch from the login page
+# or the account menu, and their choice is remembered in the browser.
+languages: [zh-CN, en]
 resources:
   requests: {cpu: 100m, memory: 128Mi}
   limits: {memory: 512Mi}
@@ -29,7 +43,7 @@ adminSecret: files-admin
 provisioner:
   image: ""
   # Explicit scoped identities: users.json [{subject,bucket,credential:{accessKey,secretKey}}], shared-bucket.
-  # The storage operator creates these buckets and scopes each key to its private + shared bucket.
+  # Add sharedCredential when the storage operator issues a separate key for the team bucket.
   existingSecret: files-provisioning
   s3Endpoint: ""
   s3Region: us-east-1
