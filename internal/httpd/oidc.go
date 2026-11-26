@@ -199,20 +199,22 @@ func (o *OIDC) getVerifier(ctx context.Context) OIDCTokenVerifier {
 }
 
 type oidcPendingAuth struct {
-	State    string        `json:"state"`
-	Nonce    string        `json:"nonce"`
-	Audience tokenAudience `json:"audience"`
-	IssuedAt int64         `json:"issued_at"`
-	Next     string        `json:"next,omitempty"`
-	Browser  string        `json:"browser,omitempty"`
+	CodeVerifier string        `json:"code_verifier"`
+	State        string        `json:"state"`
+	Nonce        string        `json:"nonce"`
+	Audience     tokenAudience `json:"audience"`
+	IssuedAt     int64         `json:"issued_at"`
+	Next         string        `json:"next,omitempty"`
+	Browser      string        `json:"browser,omitempty"`
 }
 
 func newOIDCPendingAuth(audience tokenAudience) oidcPendingAuth {
 	return oidcPendingAuth{
-		State:    util.GenerateOpaqueString(),
-		Nonce:    util.GenerateOpaqueString(),
-		Audience: audience,
-		IssuedAt: util.GetTimeAsMsSinceEpoch(time.Now()),
+		CodeVerifier: oauth2.GenerateVerifier(),
+		State:        util.GenerateOpaqueString(),
+		Nonce:        util.GenerateOpaqueString(),
+		Audience:     audience,
+		IssuedAt:     util.GetTimeAsMsSinceEpoch(time.Now()),
 	}
 }
 
@@ -632,7 +634,7 @@ func (s *httpdServer) oidcLoginRedirect(w http.ResponseWriter, r *http.Request, 
 	pendingAuth.Browser = setAuthBrowserID(w, r, oidcBrowserCookieKey)
 	oidcMgr.addPendingAuth(pendingAuth)
 	http.Redirect(w, r, s.binding.OIDC.oauth2Config.AuthCodeURL(pendingAuth.State,
-		oidc.Nonce(pendingAuth.Nonce)), http.StatusFound)
+		oidc.Nonce(pendingAuth.Nonce), oauth2.S256ChallengeOption(pendingAuth.CodeVerifier)), http.StatusFound)
 }
 
 func (s *httpdServer) debugTokenClaims(claims map[string]any, rawIDToken string) {
@@ -678,7 +680,7 @@ func (s *httpdServer) handleOIDCRedirect(w http.ResponseWriter, r *http.Request)
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
-	oauth2Token, err := s.binding.OIDC.oauth2Config.Exchange(ctx, r.URL.Query().Get("code"))
+	oauth2Token, err := s.binding.OIDC.oauth2Config.Exchange(ctx, r.URL.Query().Get("code"), oauth2.VerifierOption(authReq.CodeVerifier))
 	if err != nil {
 		logger.Debug(logSender, "", "failed to exchange oidc token: %v", err)
 		setFlashMessage(w, r, newFlashMessage("Failed to exchange OpenID token", util.I18nOIDCErrTokenExchange))

@@ -1,0 +1,16 @@
+# Build the binary outside the platform repo:
+# CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -tags 'nogcs,noazblob,nosqlite' -trimpath -o sftpgo .
+# Supply the OS CA bundle as ca-certificates.crt. For amd64 change GOARCH accordingly.
+FROM scratch
+COPY --chown=1000:1000 sftpgo /usr/local/bin/sftpgo
+COPY sftpgo.json /etc/sftpgo/sftpgo.json
+COPY templates /usr/share/sftpgo/templates
+COPY static /usr/share/sftpgo/static
+COPY openapi /usr/share/sftpgo/openapi
+COPY LICENSE /usr/share/sftpgo/LICENSE
+COPY ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+USER 1000:1000
+ENV USER=sftpgo HOME=/var/lib/sftpgo SFTPGO_LOG_FILE_PATH=""
+ENV SFTPGO_HTTPD__TEMPLATES_PATH=/usr/share/sftpgo/templates SFTPGO_HTTPD__STATIC_FILES_PATH=/usr/share/sftpgo/static SFTPGO_HTTPD__OPENAPI_PATH=/usr/share/sftpgo/openapi
+ENTRYPOINT ["/usr/local/bin/sftpgo"]
+CMD ["serve", "--config-dir", "/etc/sftpgo"]
