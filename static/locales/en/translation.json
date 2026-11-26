@@ -104,7 +104,9 @@
     "theme": {
         "light": "Light",
         "dark": "Dark",
-        "system": "Auto"
+        "system": "Auto",
+        "appearance": "Appearance",
+        "language": "Language"
     },
     "general": {
         "invalid_auth_request": "The authentication request does not meet security requirements",
@@ -1140,5 +1142,18 @@
             "user": "User login",
             "admin": "Admin login"
         }
+    },
+    "apeiron": {
+        "heading": "Apeiron Files",
+        "subheading": "Personal and team files in one place",
+        "feature_personal": "Personal storage",
+        "feature_team": "Team folders",
+        "feature_share": "Share links",
+        "signin_title": "Sign in",
+        "signin_description": "Sign in with your platform account to access your files.",
+        "signin_sso": "Sign in with SSO",
+        "need_account": "Need an account? Contact your site administrator.",
+        "toggle_sidebar": "Toggle sidebar",
+        "account_settings": "Account and settings"
     }
 }

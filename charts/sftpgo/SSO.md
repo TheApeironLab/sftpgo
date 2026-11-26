@@ -14,3 +14,5 @@ Vasi 写入专属 CA ConfigMap 和凭据 Secret 的引用；values 只保存引�
 WebClient 暴露 8080；管理 API 8081 仅监听 loopback，不经 Service/Ingress 暴露。原有 Files/S3 初始化流程仍可在 external 模式使用。迁移存量身份或换 issuer 不属于自动安装流程。
 
 投影每十秒刷新，完整目录扫描有两分钟期限；readiness 检查最近一次成功的时间，超过两分钟关闭入口，不能用永远存在的 ready 文件掩盖卡住的同步进程。
+
+当对象存储分别为个人桶和团队桶签发凭据时，在对应的 `users.json` 条目中增加 `sharedCredential`（`accessKey` 和 `secretKey`）。团队挂载使用它，个人挂载继续使用 `credential`。已有同时授权两个桶的条目可沿用原格式。

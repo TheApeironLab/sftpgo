@@ -18,7 +18,14 @@ required by the deployment, plus the following runtime Secrets:
 | `files-admin` | password |
 | `files-oidc` | issuer, client-id, client-secret |
 
+The UI follows `@apeiron/ui`: the shared layout, sidebar and login templates are rebuilt on the
+Sidebar and LoginPage designs and styled by `static/css/apeiron.css`, so build the themed ARM64 image with `release/build-drive-image.sh OUTPUT_IMAGE [LOCAL_BASE_IMAGE]`.
+The recipe keeps the SFTPGo 2.7.6 backend with S256 PKCE and overlays the UI from this checkout. `languages` (default `[zh-CN, en]`) selects the enabled UI translations; the first entry is the default.
+
 SFTPGo WebClient uses the OIDC sub as its account name. Provision personal/team buckets and user mappings before granting access. The management API remains loopback-only.
+
+Vasi binds the `drive` and `provisioner` image roles from the package. Set `clusterIssuer` and
+`storageClass` to the issuer and storage class present on the site.
 
 Chart rendering does not create Keycloak clients, grant users application roles,
 create database accounts or populate object storage. The installer must prepare

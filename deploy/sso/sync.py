@@ -82,8 +82,8 @@ def directory():
     return second
 
 
-def account(subject, personal, shared, credential):
-    def filesystem(bucket):
+def account(subject, personal, shared, credential, shared_credential=None):
+    def filesystem(bucket, keys):
         return {
             "provider": 1,
             "s3config": {
@@ -91,10 +91,10 @@ def account(subject, personal, shared, credential):
                 "region": os.environ.get("S3_REGION", "us-east-1"),
                 "endpoint": os.environ["S3_ENDPOINT"],
                 "force_path_style": True,
-                "access_key": credential["accessKey"],
+                "access_key": keys["accessKey"],
                 "access_secret": {
                     "status": "Plain",
-                    "payload": credential["secretKey"],
+                    "payload": keys["secretKey"],
                 },
             },
         }
@@ -123,11 +123,11 @@ def account(subject, personal, shared, credential):
                 "mapped_path": f"/var/lib/sftpgo/{kind}/{subject}",
                 "quota_size": -1,
                 "quota_files": -1,
-                "filesystem": filesystem(bucket),
+                "filesystem": filesystem(bucket, keys),
             }
-            for kind, path, bucket in (
-                ("personal", "/我的文件", personal),
-                ("team", "/团队文件", shared),
+            for kind, path, bucket, keys in (
+                ("personal", "/我的文件", personal, credential),
+                ("team", "/团队文件", shared, shared_credential if shared_credential is not None else credential),
             )
         ],
     }
@@ -155,7 +155,11 @@ def sync():
     for user in declared:
         if (not re.fullmatch(r'[0-9a-f-]{36}', user['subject']) or user['subject'] in subjects
                 or bucket(user['bucket']) in buckets or not user['credential'].get('accessKey')
-                or not user['credential'].get('secretKey')):
+                or not user['credential'].get('secretKey')
+                or ('sharedCredential' in user and
+                    (not isinstance(user['sharedCredential'], dict)
+                     or not user['sharedCredential'].get('accessKey')
+                     or not user['sharedCredential'].get('secretKey')))):
             raise ValueError('invalid or ambiguous scoped storage declaration')
         subjects.add(user['subject']); buckets.add(user['bucket'])
     # Never infer eligibility from a partial or failed directory response.
@@ -182,7 +186,7 @@ def sync():
     for subject, declaration in wanted.items():
         if subject in names and subject not in owned:
             raise RuntimeError('refusing to take over a foreign Files account')
-        body = account(subject, declaration['bucket'], shared, declaration['credential'])
+        body = account(subject, declaration['bucket'], shared, declaration['credential'], declaration.get('sharedCredential'))
         body['description'] = marker
         for folder in body['virtual_folders']:
             # A new owned user cannot adopt a preexisting virtual folder.

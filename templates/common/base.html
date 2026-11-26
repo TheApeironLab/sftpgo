@@ -47,6 +47,9 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
 			themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
 		document.documentElement.setAttribute("data-bs-theme", themeMode);
+		if (localStorage.getItem("apeiron-sidebar-collapsed") === "true") {
+			document.documentElement.setAttribute("data-sidebar-collapsed", "true");
+		}
 	}
 </script>
 {{- end }}
@@ -218,6 +221,12 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
                 debug: false,
                 supportedLngs: Object.keys(lngs),
                 fallbackLng: Object.keys(lngs)[0],
+                // Only an explicit choice overrides the default (the first configured language);
+                // the browser language and the page lang attribute are ignored.
+                detection: {
+                    order: ['querystring', 'localStorage'],
+                    caches: ['localStorage']
+                },
                 backend: {
                     backends: [
                         i18nextLocalStorageBackend,
@@ -257,6 +266,35 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
                         } else {
                             languageSwitcher.addClass("d-none");
                         }
+                    }
+
+                    var languageMenu = document.getElementById('apeiron_language_menu');
+                    if (languageMenu && Object.keys(lngs).length > 1) {
+                        const shortNames = { 'en': 'EN', 'zh-CN': '中文' };
+                        Object.keys(lngs).map((lng) => {
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.textContent = shortNames[lng] || lngs[lng].nativeName;
+                            btn.title = lngs[lng].nativeName;
+                            btn.setAttribute('lang', lng);
+                            if (lng === i18next.resolvedLanguage) {
+                                btn.classList.add('active');
+                                btn.setAttribute('aria-pressed', 'true');
+                            } else {
+                                btn.setAttribute('aria-pressed', 'false');
+                            }
+                            // Reload so tables, date pickers and server-rendered labels pick up the language.
+                            btn.addEventListener('click', function () {
+                                if (lng === i18next.resolvedLanguage) {
+                                    return;
+                                }
+                                i18next.changeLanguage(lng, () => {
+                                    window.location.reload();
+                                });
+                            });
+                            languageMenu.appendChild(btn);
+                        });
+                        document.getElementById('apeiron_language_row').classList.remove('d-none');
                     }
 
                     renderI18n();
@@ -370,6 +408,25 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
         if (dismissErrorBtn.length){
             dismissErrorBtn.on("click", function(){
                 $('#errorMsg').addClass("d-none");
+            });
+        }
+
+        var sidebarToggle = document.getElementById('apeiron_sidebar_toggle');
+        if (sidebarToggle) {
+            var syncSidebar = function () {
+                var collapsed = document.documentElement.getAttribute('data-sidebar-collapsed') === 'true';
+                sidebarToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            };
+            syncSidebar();
+            sidebarToggle.addEventListener('click', function () {
+                var collapsed = document.documentElement.getAttribute('data-sidebar-collapsed') !== 'true';
+                if (collapsed) {
+                    document.documentElement.setAttribute('data-sidebar-collapsed', 'true');
+                } else {
+                    document.documentElement.removeAttribute('data-sidebar-collapsed');
+                }
+                localStorage.setItem('apeiron-sidebar-collapsed', collapsed ? 'true' : 'false');
+                syncSidebar();
             });
         }
 
@@ -759,6 +816,21 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
 </style>
 {{- end}}
 
+{{- define "apeiron-appearance"}}
+<div class="apeiron-account-row">
+    <span class="apeiron-account-row-label"><i class="lu lu-sun"></i><span data-i18n="theme.appearance">Appearance</span></span>
+    <div class="apeiron-segment" data-kt-element="theme-mode-menu" role="group" aria-label="Appearance">
+        <button type="button" data-kt-element="mode" data-kt-value="light" data-i18n="[title]theme.light;[aria-label]theme.light" title="Light"><i class="lu lu-sun"></i></button>
+        <button type="button" data-kt-element="mode" data-kt-value="dark" data-i18n="[title]theme.dark;[aria-label]theme.dark" title="Dark"><i class="lu lu-moon"></i></button>
+        <button type="button" data-kt-element="mode" data-kt-value="system" data-i18n="[title]theme.system;[aria-label]theme.system" title="Auto"><i class="lu lu-monitor"></i></button>
+    </div>
+</div>
+<div class="apeiron-account-row d-none" id="apeiron_language_row">
+    <span class="apeiron-account-row-label"><i class="lu lu-languages"></i><span data-i18n="theme.language">Language</span></span>
+    <div class="apeiron-segment apeiron-segment-text" id="apeiron_language_menu" role="group" data-i18n="[aria-label]theme.language" aria-label="Language"></div>
+</div>
+{{- end}}
+
 {{- define "theme-switcher"}}
 <div class="d-flex align-items-center ms-2 ms-lg-3">
     <a href="#" class="btn btn-icon btn-active-light-primary w-35px h-35px w-md-40px h-md-40px" data-kt-menu-trigger="{default:'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
@@ -878,6 +950,7 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
         <link href="{{$.StaticURL}}{{.}}" rel="stylesheet" type="text/css">
         {{- end}}
         {{- template "globalstyle" .CSPNonce }}
+        <link href="{{.StaticURL}}/css/apeiron.css" rel="stylesheet" type="text/css">
         {{- range .Branding.ExtraCSS}}
         <link href="{{$.StaticURL}}{{.}}" rel="stylesheet" type="text/css">
         {{- end}}
@@ -892,29 +965,10 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
         <div class="d-flex flex-column flex-root app-root d-none" id="app_root">
             <div class="app-page  flex-column flex-column-fluid " id="kt_app_page">
                 {{- if .LoggedUser.Username}}
-                <div id="kt_app_header" class="app-header" data-kt-sticky="true" data-kt-sticky-activate="{default: true, lg: true}" data-kt-sticky-name="app-header-minimize" data-kt-sticky-offset="{default: '200px', lg: '300px'}" data-kt-sticky-animation="false">
-                    <div class="app-container  container-fluid d-flex align-items-stretch flex-stack " id="kt_app_header_container">
-                        <div class="d-flex align-items-center d-block d-lg-none ms-n3" title="Show sidebar menu">
-                            <div class="btn btn-icon btn-color-gray-800 btn-active-color-primary w-35px h-35px me-1" id="kt_app_sidebar_mobile_toggle">
-                                <i class="ki-duotone ki-abstract-14 fs-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                            </div>
-                            <span>
-                                <img alt="Logo" src="{{.StaticURL}}{{.Branding.LogoPath}}" class="h-30px" />
-                            </span>
-                        </div>
-                        <div class="app-navbar flex-lg-grow-1" id="kt_app_header_navbar">
-                            <div class="app-navbar-item d-flex align-items-center flex-lg-grow-1 me-2 me-lg-0">
-                            </div>
-                            <!-- <div class="d-flex align-self-center flex-center flex-shrink-0">
-                            </div> -->
-                            <div class="d-flex align-self-center flex-center flex-shrink-0">
-                                {{- template "navitems" .}}
-							</div>
-                        </div>
-                    </div>
+                <div id="kt_app_header" class="app-header apeiron-mobilebar d-lg-none">
+                    <button type="button" class="apeiron-icon-btn" id="kt_app_sidebar_mobile_toggle" data-i18n="[aria-label]apeiron.toggle_sidebar;[title]apeiron.toggle_sidebar" aria-label="Toggle sidebar">
+                        <i class="lu lu-panel-left"></i>
+                    </button>
                 </div>
                 {{- else if .IsLoggedToShare}}
                 <div class="app-container container-fluid d-flex mt-5">
@@ -935,21 +989,24 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
 
                         </div>
                     </div> -->
-                    <div id="kt_app_sidebar" class="app-sidebar flex-column" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="300px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
-                        <div class="app-sidebar-header flex-column mx-10 pt-8" id="kt_app_sidebar_header">
-                            <div class="d-flex flex-stack d-none d-lg-flex mb-13">
-                                <div class="app-sidebar-logo">
-									<img alt="Logo" src="{{.StaticURL}}{{.Branding.LogoPath}}" class="h-40px app-sidebar-logo-default" />
-									<span class="text-sidebar fs-4 fw-semibold ps-5">{{.Branding.ShortName}}</span>
-								</div>
-                            </div>
+                    <div id="kt_app_sidebar" class="app-sidebar flex-column apeiron-sidebar" data-kt-drawer="true" data-kt-drawer-name="app-sidebar" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="261px" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
+                        <div class="apeiron-sidebar-header" id="kt_app_sidebar_header">
+                            <span class="apeiron-sidebar-logo" role="img" aria-label="{{.Branding.ShortName}}">
+                                <img alt="" src="{{.StaticURL}}/img/apeiron/menu-collapsed.png" class="theme-light-show" />
+                                <img alt="" src="{{.StaticURL}}/img/apeiron/menu-collapsed-dark.png" class="theme-dark-show" />
+                            </span>
+                            <div class="apeiron-sidebar-title">{{.Branding.ShortName}}</div>
+                            <button type="button" class="apeiron-icon-btn apeiron-sidebar-toggle" id="apeiron_sidebar_toggle" data-i18n="[aria-label]apeiron.toggle_sidebar;[title]apeiron.toggle_sidebar" aria-label="Toggle sidebar" aria-controls="kt_app_sidebar" aria-expanded="true">
+                                <i class="lu lu-panel-left"></i>
+                            </button>
                         </div>
-                        <div class="app-sidebar-navs flex-column-fluid pb-6" id="kt_app_sidebar_navs">
-                            <div id="kt_app_sidebar_navs_wrappers" class="hover-scroll-y my-2 mx-4" data-kt-scroll="true" data-kt-scroll-activate="true" data-kt-scroll-height="auto" data-kt-scroll-dependencies="#kt_app_sidebar_header" data-kt-scroll-wrappers="#kt_app_sidebar_navs" data-kt-scroll-offset="5px">
-                                <div id="#kt_app_sidebar_menu" data-kt-menu="true" data-kt-menu-expand="false" class="menu menu-column menu-rounded menu-sub-indention menu-active-bg mb-7">
-                                    {{- template "sidebaritems" .}}
-                                </div>
-                            </div>
+                        <div class="apeiron-sidebar-navs" id="kt_app_sidebar_navs">
+                            <nav id="kt_app_sidebar_menu" data-kt-menu="true" data-kt-menu-expand="false" class="menu menu-column apeiron-menu">
+                                {{- template "sidebaritems" .}}
+                            </nav>
+                        </div>
+                        <div class="apeiron-sidebar-footer">
+                            {{- template "sidebarfooter" .}}
                         </div>
                     </div>
                     {{- end}}
@@ -961,15 +1018,6 @@ explicit grant from the SFTPGo Team (support@sftpgo.com).
                                 </div>
                             </div>
                         </div>
-                        {{- if .LoggedUser.Username}}
-                        <div id="kt_app_footer" class="app-footer">
-                            <div class="app-container  container-fluid d-flex flex-column flex-md-row flex-center flex-md-stack py-3 align-items-center justify-content-center">
-                                <div class="text-gray-900 order-2 order-md-1">
-                                    <span class="text-gray-700 fw-semibold me-1">{{.Version}}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {{- end}}
                     </div>
                 </div>
             </div>

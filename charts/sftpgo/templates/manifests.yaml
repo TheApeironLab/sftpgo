@@ -31,7 +31,7 @@ spec:
       containers:
 {{- if eq .Values.auth.mode "oidc" }}
         - name: identity-projection
-          image: {{ required "provisioner.image is required for managed OIDC" .Values.provisioner.image | quote }}
+          image: {{ include "sftpgo.image" (dict "root" . "role" "provisioner" "override" .Values.provisioner.image) | quote }}
           securityContext: {runAsNonRoot: true, runAsUser: 1000, allowPrivilegeEscalation: false}
           env:
             - {name: SSO_TENANT, value: {{ required "auth.oidc.tenant is required" .Values.auth.oidc.tenant | quote }}}
@@ -52,11 +52,12 @@ spec:
             periodSeconds: 5
 {{- end }}
         - name: files
-          image: {{ required "files image is required" .Values.image | quote }}
+          image: {{ include "sftpgo.image" (dict "root" . "role" "drive" "override" .Values.image) | quote }}
           args: [serve, --config-dir, /etc/sftpgo, --log-level, info]
           securityContext: {runAsNonRoot: true, runAsUser: 1000, allowPrivilegeEscalation: false}
           env:
             - {name: SSL_CERT_DIR, value: "/etc/ssl/certs:/etc/chentu-ca"}
+            - {name: SFTPGO_SMTP__TEMPLATES_PATH, value: /usr/share/sftpgo/templates}
             - {name: SFTPGO_SFTPD__BINDINGS__0__PORT, value: "0"}
             - {name: SFTPGO_DATA_PROVIDER__DRIVER, value: bolt}
             - {name: SFTPGO_DATA_PROVIDER__NAME, value: /var/lib/sftpgo/files.db}
@@ -79,6 +80,11 @@ spec:
             - {name: SFTPGO_HTTPD__BINDINGS__0__OIDC__USERNAME_FIELD, value: sub}
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__ENABLED, value: "true"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__CONTENT_SECURITY_POLICY, value: {{ printf "frame-ancestors %s" .Values.frameAncestors | quote }}}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__LANGUAGES, value: {{ join "," .Values.languages | quote }}}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__NAME, value: Files}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__SHORT_NAME, value: Files}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__LOGO_PATH, value: /img/apeiron/brand.svg}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__FAVICON_PATH, value: /img/apeiron-favicon.png}
             - {name: SFTPGO_HTTPD__BINDINGS__1__PORT, value: "8081"}
             - {name: SFTPGO_HTTPD__BINDINGS__1__ADDRESS, value: "127.0.0.1"}
             - {name: SFTPGO_HTTPD__BINDINGS__1__ENABLE_WEB_ADMIN, value: "false"}
@@ -116,7 +122,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: files
-  annotations: {cert-manager.io/cluster-issuer: chentu-internal-ca}
+  annotations: {cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer | quote }}}
 spec:
   ingressClassName: traefik
   tls: [{hosts: [{{ default (printf "files.%s" .Values.domain) .Values.ingress.host }}], secretName: files-tls}]
