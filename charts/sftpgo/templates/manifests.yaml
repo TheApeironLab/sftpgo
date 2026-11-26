@@ -123,7 +123,7 @@ kind: Ingress
 metadata:
   name: files
   annotations:
-    {{- pick (.Chart.Annotations | toJson | fromJson) "vasi.apeironlab.cn/display-name-zh" "vasi.apeironlab.cn/display-name-en" "vasi.apeironlab.cn/category" "vasi.apeironlab.cn/category-name-zh" "vasi.apeironlab.cn/category-name-en" | toYaml | nindent 4 }}
+    {{- pick (.Chart.Annotations | toJson | fromJson) "vasi.apeironlab.cn/icon" "vasi.apeironlab.cn/display-name-zh" "vasi.apeironlab.cn/display-name-en" "vasi.apeironlab.cn/category" "vasi.apeironlab.cn/category-name-zh" "vasi.apeironlab.cn/category-name-en" | toYaml | nindent 4 }}
     cert-manager.io/cluster-issuer: {{ .Values.clusterIssuer | quote }}
 spec:
   ingressClassName: traefik
