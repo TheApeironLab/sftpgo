@@ -81,8 +81,8 @@ spec:
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__ENABLED, value: "true"}
             - {name: SFTPGO_HTTPD__BINDINGS__0__SECURITY__CONTENT_SECURITY_POLICY, value: {{ printf "frame-ancestors %s" .Values.frameAncestors | quote }}}
             - {name: SFTPGO_HTTPD__BINDINGS__0__LANGUAGES, value: {{ join "," .Values.languages | quote }}}
-            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__NAME, value: Files}
-            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__SHORT_NAME, value: Files}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__NAME, value: Drive}
+            - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__SHORT_NAME, value: Drive}
             - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__LOGO_PATH, value: /img/apeiron/brand.svg}
             - {name: SFTPGO_HTTPD__BINDINGS__0__BRANDING__WEB_CLIENT__FAVICON_PATH, value: /img/apeiron-favicon.png}
             - {name: SFTPGO_HTTPD__BINDINGS__1__PORT, value: "8081"}
