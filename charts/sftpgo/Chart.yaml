@@ -6,3 +6,7 @@ type: application
 appVersion: "2.7.6"
 sources:
   - https://github.com/TheApeironLab/sftpgo
+annotations:
+  vasi.apeironlab.cn/display-name-zh: "文件空间"
+  vasi.apeironlab.cn/display-name-en: "Drive"
+  vasi.apeironlab.cn/category: "storage"
